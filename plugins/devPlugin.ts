@@ -35,3 +35,22 @@ export let devPlugin = () => {
     },
   };
 };
+// getReplacer 方法是我们为 vite-plugin-optimizer 插件提供的内置模块列表
+export let getReplacer = () => {
+  let externalModels = ["os", "fs", "path", "events", "child_process", "crypto", "http", "buffer", "url", "better-sqlite3", "knex"];
+  let result = {};
+  for (let item of externalModels) {
+    result[item] = () => ({
+      find: new RegExp(`^${item}$`),
+      code: `const ${item} = require('${item}');export { ${item} as default }`,
+    });
+  }
+  result["electron"] = () => {
+    let electronModules = ["clipboard", "ipcRenderer", "nativeImage", "shell", "webFrame"].join(",");
+    return {
+      find: new RegExp(`^electron$`),
+      code: `const {${electronModules}} = require('electron');export {${electronModules}}`,
+    };
+  };
+  return result;
+};
